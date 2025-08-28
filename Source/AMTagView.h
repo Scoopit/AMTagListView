@@ -22,7 +22,7 @@ extern NSString * const AMTagViewNotification;
  *
  * The tag's corner radius
  */
-@property (nonatomic, assign) float		radius UI_APPEARANCE_SELECTOR;
+@property (nonatomic, assign) float		selfRadius UI_APPEARANCE_SELECTOR;
 
 /** Tag Length
  *
@@ -82,7 +82,7 @@ extern NSString * const AMTagViewNotification;
  *
  * The padding of the accessory image within the tag
  */
-@property (nonatomic, assign) float     imagePadding UI_APPEARANCE_SELECTOR;
+@property (nonatomic, assign) float     selfImagePadding UI_APPEARANCE_SELECTOR;
 
 /**
  * Text displayed

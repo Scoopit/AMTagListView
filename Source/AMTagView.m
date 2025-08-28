@@ -36,7 +36,7 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
 #pragma mark - NSObject
 
 + (void)initialize {
-    [[self appearance] setRadius:kDefaultRadius];
+    [[self appearance] setSelfRadius:kDefaultRadius];
     [[self appearance] setTagLength:kDefaultTagLength];
     [[self appearance] setHoleRadius:kDefaultHoleRadius];
     [[self appearance] setInnerTagPadding:kDefaultInnerPadding];
@@ -46,7 +46,7 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
     [[self appearance] setTagColor:kDefaultTagColor];
     [[self appearance] setInnerTagColor:kDefaultInnerTagColor];
     [[self appearance] setAccessoryImage:nil];
-    [[self appearance] setImagePadding:kDefaultImagePadding];
+    [[self appearance] setSelfImagePadding:kDefaultImagePadding];
 }
 
 #pragma mark - UIResponder
@@ -66,7 +66,7 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
         self.button = [[UIButton alloc] init];
         self.imageView = [[UIImageView alloc] init];
         self.labelText.textAlignment = NSTextAlignmentCenter;
-        _radius = [[[self class] appearance] radius];
+        _selfRadius = [[[self class] appearance] radius];
         _tagLength = [[[self class] appearance] tagLength];
         _holeRadius = [[[self class] appearance] holeRadius];
         _innerTagPadding = [[[self class] appearance] innerTagPadding];
@@ -76,7 +76,7 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
         _tagColor = [[[self class] appearance] tagColor];
         _innerTagColor = [[[self class] appearance] innerTagColor];
         _accessoryImage = [[[self class] appearance] accessoryImage];
-        _imagePadding = [[[self class] appearance] imagePadding];
+        _selfImagePadding = [[[self class] appearance] imagePadding];
         [self addSubview:self.labelText];
         [self addSubview:self.imageView];
         [self addSubview:self.button];
@@ -88,18 +88,18 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
 - (void)layoutSubviews {
     [super layoutSubviews];
 
-    CGFloat leftMargin = (int)(self.innerTagPadding + self.tagLength + (self.tagLength ? self.radius / 2 : 0));
+    CGFloat leftMargin = (int)(self.innerTagPadding + self.tagLength + (self.tagLength ? self.selfRadius / 2 : 0));
     CGFloat rightMargin = self.innerTagPadding;
 
     if (self.accessoryImage) {
         CGRect imageRect = self.imageView.bounds;
-        rightMargin = (int)ceilf(rightMargin + imageRect.size.width + self.imagePadding);
+        rightMargin = (int)ceilf(rightMargin + imageRect.size.width + self.selfImagePadding);
         imageRect.origin.x = (int)(self.frame.size.width - rightMargin);
         imageRect.origin.y = (int)(self.frame.size.height - self.imageView.frame.size.height) / 2;
         self.imageView.frame = imageRect;
     }
 
-    [self.labelText.layer setCornerRadius:self.radius / 2];
+    [self.labelText.layer setCornerRadius:self.selfRadius / 2];
     [self.labelText setFrame:CGRectMake(
         leftMargin,
         (int)(self.innerTagPadding),
@@ -109,27 +109,12 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
 
     CGRect buttonRect = self.labelText.frame;
     if (self.accessoryImage) {
-        buttonRect.size.width = buttonRect.size.width + self.imageView.bounds.size.width + self.imagePadding * 2;
+        buttonRect.size.width = buttonRect.size.width + self.imageView.bounds.size.width + self.selfImagePadding * 2;
     }
 
     [self.button setFrame:buttonRect];
     [self.labelText setTextColor:self.textColor];
     [self.labelText setFont:self.textFont];
-    
-    CGSize size = [self.labelText.text sizeWithAttributes:@{NSFontAttributeName: self.textFont}];
-    
-    size.width = size.width + self.textPadding.x * 2 + self.innerTagPadding * 2 + self.tagLength;
-    if (self.accessoryImage) {
-        self.imageView.image = self.accessoryImage;
-        [self.imageView sizeToFit];
-        size.width += self.imageView.frame.size.width + self.imagePadding;
-    }
-    size.height = (int)ceilf(size.height + self.textPadding.y);
-    size.width = (int)ceilf(size.width);
-    
-    CGRect frame = self.frame;
-    frame.size = size;
-    self.frame = frame;
 }
 
 - (void)drawRect:(CGRect)rect {
@@ -151,7 +136,7 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
     float tagLength = self.tagLength;
     float height = rect.size.height;
     float width = rect.size.width;
-    float radius = self.radius;
+    float radius = self.selfRadius;
 
     if (padding > 0) {
         UIBezierPath *aPath = [UIBezierPath bezierPath];
@@ -197,22 +182,40 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
 
 - (void)drawWithoutTagForRect:(CGRect)rect {
     if (self.innerTagPadding > 0) {
-        UIBezierPath* backgroundPath = [UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:self.radius];
+        UIBezierPath* backgroundPath = [UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:self.selfRadius];
         [self.tagColor setFill];
         [backgroundPath fill];
     }
 
     CGRect inset = CGRectInset(rect, self.innerTagPadding, self.innerTagPadding);
-    UIBezierPath* insidePath = [UIBezierPath bezierPathWithRoundedRect:inset cornerRadius:self.radius - self.innerTagPadding];
+    UIBezierPath* insidePath = [UIBezierPath bezierPathWithRoundedRect:inset cornerRadius:self.selfRadius - self.innerTagPadding];
     [self.innerTagColor setFill];
     [insidePath fill];
 }
 
 #pragma mark - Public Interface
 
-- (void)setupWithText:(NSString *)text {
+- (void)setupWithText:(NSString*)text {
+    UIFont* font = self.textFont;
+    CGSize size = [text sizeWithAttributes:@{NSFontAttributeName: font}];
+
+    float innerPadding = self.innerTagPadding;
+    float tagLength = self.tagLength;
+
+    size.width = size.width + self.textPadding.x * 2 + innerPadding * 2 + tagLength;
+    if (self.accessoryImage) {
+        self.imageView.image = self.accessoryImage;
+        [self.imageView sizeToFit];
+        size.width += self.imageView.frame.size.width + self.selfImagePadding;
+    }
+    size.height = (int)ceilf(size.height + self.textPadding.y);
+    size.width = (int)ceilf(size.width);
+
+    CGRect frame = self.frame;
+    frame.size = size;
+    self.frame = frame;
+
     [self.labelText setText:text];
-    [self setNeedsLayout];
 }
 
 - (NSString *)tagText {
@@ -228,7 +231,6 @@ NSString * const AMTagViewNotification = @"AMTagViewNotification";
 - (void)setAccessoryImage:(UIImage *)accessoryImage {
     _accessoryImage = accessoryImage;
     self.imageView.image = accessoryImage;
-    [self setNeedsLayout];
 }
 
 - (void)setTextColor:(UIColor *)textColor {
